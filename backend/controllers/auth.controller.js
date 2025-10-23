@@ -84,10 +84,24 @@ const login = async (req, res) => {
                });
           }
 
-          return res.status(200).json({
+          // removing password feild
+          const userData = user.toObject();
+          delete userData.password;
+
+          // generating token
+          const token = await user.generateAuthToken();
+
+          return res.status(200)
+               .cookie('token', token, {
+                    httpOnly: true,
+                    maxAge: 24 * 60 * 60 * 1000
+               })
+               .json({
                success: true,
                message: 'User Loggin Successfully',
-          });
+               user : userData
+               });
+          
      } catch (error) {
           console.log("login Error ::", error.message)
            res.status(500).json({
@@ -97,4 +111,14 @@ const login = async (req, res) => {
      }
 }
 
-export { register, login };
+
+const updateprofile = async (req, res) => {
+     try {
+          const { name, profileImage, bio } = req.body;
+
+          
+     } catch (error) {
+          
+     }
+}
+export { register, login, updateprofile };

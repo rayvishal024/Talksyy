@@ -3,17 +3,23 @@ import mongoose from "mongoose";
 const messageSchema = new mongoose.Schema({
      senderId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref : 'user'
+          ref: 'User',
+          require : true
      },
-     receaveId: {
+     receiverId: {
           type: mongoose.Schema.Types.ObjectId,
-          ref: 'user'
+          ref: 'User',
+          require : true
      },
      message: {
           type : String
      },
      image: {
           type : String
+     },
+     seen: {
+          type: Boolean,
+          default : false
      }
 }, { timestamps: true });
 
