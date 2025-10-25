@@ -1,5 +1,6 @@
 import UserModel from "../models/user.model.js";
 import OtpModel from "../models/otp.model.js";
+import { uploadImage } from "../utils/uploadImage.js";
 
 const register = async (req, res) => {
      try {
@@ -111,14 +112,57 @@ const login = async (req, res) => {
      }
 }
 
-
 const updateprofile = async (req, res) => {
      try {
           const { name, profileImage, bio } = req.body;
+           
+          const userId = req.user._id;
 
+          let updatedUser;
+
+          // update name 
+          if (!user) {
+              updatedUser = await UserModel.findByIdAndUpdate(userId, {name}, {new : true})
+          }
+
+          if (profileImage) {
+
+               const imageUrl = uploadImage(profileImage);
+
+              updatedUser = await UserModel.findByIdAndUpdate(userId, { profileImage: imageUrl }, {new : true});
+          }
+
+          if (!bio) {
+               updatedUser = await UserModel.findByIdAndUpdate(userId, { bio }, { new: true });
+          }
           
+          return res.status(201).json({
+               success: true,
+               message: "Profile update Successfully"
+          });
+
      } catch (error) {
-          
+          console.log("update profile Error ::", error.message)
+          res.status(500).json({
+               success: false,
+               error: error.message
+          });
      }
 }
+
+
+const logout = async (req, res) => {
+     try {
+          
+          console.log("Complete logout controller first .. ")
+          
+     } catch (error) {
+          console.log("logout Error ::", error.message)
+          res.status(500).json({
+               success: false,
+               error: error.message
+          });
+     }
+}
+
 export { register, login, updateprofile };
