@@ -11,7 +11,7 @@ dotenv.config();
 const server = createServer(app);
 
 // io instance for connection
-const io = new Server(server);
+export const io = new Server(server);
 
 // creating a map for user & socket details
 export const userSocketMap = {};
@@ -33,7 +33,6 @@ io.on('connection', (socket) => {
      // any client goes offline then we have to update usersocketmao & onlineuser details
      // on disconnect event
      socket.on('disconnect', () => {
-
           delete userSocketMap[userId];
           io.emit('currentOnlineUsers', Object.keys(userSocketMap));
      })

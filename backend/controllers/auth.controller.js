@@ -1,6 +1,7 @@
 import UserModel from "../models/user.model.js";
 import OtpModel from "../models/otp.model.js";
 import { uploadImage } from "../utils/uploadImage.js";
+import streamifier from 'streamifier';
 
 const register = async (req, res) => {
      try {
@@ -9,7 +10,7 @@ const register = async (req, res) => {
           // check input feild 
           if (!name || !email || !password || !otp) {
 
-               return res.status(403).json({
+               return res.json({
                     success: false,
                     message: 'All fields are required',
                });
@@ -19,7 +20,7 @@ const register = async (req, res) => {
           const isUserExist = await UserModel.findOne({ email });
 
           if (isUserExist) {
-               return res.status(400).json({
+               return res.json({
                     success: false,
                     message: "User already Exist"
                });
@@ -29,7 +30,7 @@ const register = async (req, res) => {
           const response = await OtpModel.find({ email }).sort({ createdAt: -1 }).limit(1);
 
           if (response.length === 0 || response[0].otp !== otp) {
-               return res.status(400).json({
+               return res.json({
                     success: false,
                     message : "Invalid OTP"
                })
@@ -61,25 +62,26 @@ const login = async (req, res) => {
           const { email, password } = req.body;
           
           if (!email || !password) {
-               return res.status(403).json({
+               return res.json({
                     success: false,
                     message: 'All fields are required',
                });
           }
 
-          const user = await UserModel.findOne({ email });
-
+          const user = await UserModel.findOne({ email }).select('+password');
+        
           if (!user) {
-               return res.status(401).json({
+               return res.json({
                     success: false,
                     message: 'Invalid email & password',
                });
           }
 
-          const iscorrectPassword = user.comparePassword(password);
+          const iscorrectPassword = await user.comparePassword(password);
+          // console.log(iscorrectPassword);
 
           if (!iscorrectPassword) {
-               return res.status(401).json({
+               return res.json({
                     success: false,
                     message: 'Invalid email & password',
                });
@@ -90,7 +92,7 @@ const login = async (req, res) => {
           delete userData.password;
 
           // generating token
-          const token = await user.generateAuthToken();
+          const token =  user.generateAuthToken();
 
           return res.status(200)
                .cookie('token', token, {
@@ -114,22 +116,29 @@ const login = async (req, res) => {
 
 const updateprofile = async (req, res) => {
      try {
-          const { name, profileImage, bio } = req.body;
-           
+
+          const { name, bio } = req.body;
+         
+          const profileImage = null;
+                 
           const userId = req.user._id;
 
           let updatedUser;
 
           // update name 
-          if (!user) {
+          if (name) {
               updatedUser = await UserModel.findByIdAndUpdate(userId, {name}, {new : true})
           }
 
-          if (profileImage) {
+          // if files comes
+          if (req.file) {
+               // Create a readable stream from the buffer
+               const readableStream = streamifier.createReadStream(req.file.buffer);
 
-               const imageUrl = uploadImage(profileImage);
+               const imageUrl = uploadImage(readableStream);
 
-              updatedUser = await UserModel.findByIdAndUpdate(userId, { profileImage: imageUrl }, {new : true});
+               updatedUser = await UserModel.findByIdAndUpdate(userId, { profileImage: imageUrl }, { new: true });
+
           }
 
           if (!bio) {
@@ -165,4 +174,4 @@ const logout = async (req, res) => {
      }
 }
 
-export { register, login, updateprofile };
+export { register, login, updateprofile , logout};

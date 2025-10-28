@@ -1,5 +1,7 @@
 import messageModel from '../models/message.model.js';
 import UserModel from '../models/user.model.js';
+import { uploadImage } from '../utils/uploadImage.js';
+import { io, userSocketMap } from '../server.js';
 
 const getAllUsersandunseenCount = async (req, res) => {
      try {
@@ -93,6 +95,8 @@ const markMessageasSeen = async (req, res) => {
           res.json({ message: true });
 
      } catch (error) {
+          console.log("Message Controoler Error ::", error.message);
+
           res.status(500).json({
                success: false,
                error: error.messsage
@@ -101,6 +105,45 @@ const markMessageasSeen = async (req, res) => {
 }
 
 // send message controller --
+const sendMessage = async (req, res) => {
+     try {
+          // recieve Message
+          const { text, image } = req.body;
 
+          // upload image to cloudinary 
+          const imageUrl = await uploadImage(image);
 
-export { getAllUsersandunseenCount, allMessageofUser, markMessageasSeen };
+          // reciver id
+          const receiverId = req.params.id;
+
+          // sender id
+          const senderId = req.user._id;
+
+          // creating new message
+        const newmessage =  await messageModel.create({senderId, receiverId,  message: text, image: imageUrl });
+          
+          // we have to find reciever socket id for sending message
+          const receiverSocketId = userSocketMap[receiverId];
+
+          // sending new message to reciever
+          if (receiverSocketId) {
+               io.to(receiverSocketId).emit('newmessage', newmessage);
+          }
+
+          // sending response to client
+          res.status(200).json({
+               success: true,
+               newmessage
+          });
+
+     } catch (error) {
+          console.log("Meeage Controller Error ", error.message);
+
+          res.status(500).json({
+               success: false,
+               error: error.messsage
+          })
+     }
+}
+
+export { getAllUsersandunseenCount, allMessageofUser, markMessageasSeen, sendMessage };

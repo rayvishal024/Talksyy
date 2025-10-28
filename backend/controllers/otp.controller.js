@@ -10,7 +10,7 @@ const sendOTP = async (req, res) => {
       const isUserExist = await UserModel.findOne({ email });
  
       if (isUserExist) {
-           return res.status(401).json({
+           return res.json({
                 success: false,
                 message: "User Email Already Exist",
                 data : null
@@ -38,13 +38,13 @@ const sendOTP = async (req, res) => {
       }
  
       // create document with email & otp
-      const otpres = await OtpModel.create({ email, otp });
+      const otpresult = await OtpModel.create({ email, otp });
      
       // sending response to frontend
       res.status(200).json({
            success: true,
            message: "OTP Send Successfully to email",
-           otp: otp
+           otp
       });
  
     } catch (error) {
